@@ -17,6 +17,7 @@ export type Database = {
           food_name: string
           food_type: string
           id: string
+          image_url: string | null
           pickup_location: string
           pickup_time: string
           quantity: string
@@ -31,6 +32,7 @@ export type Database = {
           food_name: string
           food_type: string
           id?: string
+          image_url?: string | null
           pickup_location: string
           pickup_time: string
           quantity: string
@@ -45,6 +47,7 @@ export type Database = {
           food_name?: string
           food_type?: string
           id?: string
+          image_url?: string | null
           pickup_location?: string
           pickup_time?: string
           quantity?: string

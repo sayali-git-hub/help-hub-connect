@@ -1,10 +1,11 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { Package, Calendar, MapPin, Clock } from 'lucide-react';
+import { Package, Calendar, MapPin, Clock, Image, Upload } from 'lucide-react';
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,10 @@ type FormValues = z.infer<typeof formSchema>;
 const DonationForm: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [uploading, setUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -44,11 +49,70 @@ const DonationForm: React.FC = () => {
     },
   });
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) {
+      setImageFile(null);
+      setPreviewUrl(null);
+      return;
+    }
+
+    const file = e.target.files[0];
+    setImageFile(file);
+    
+    // Create a preview URL
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+  };
+
+  const uploadImage = async () => {
+    if (!imageFile || !user) return null;
+    
+    try {
+      setUploading(true);
+      
+      // Create a unique file name
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+      
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('food_images')
+        .upload(filePath, imageFile);
+      
+      if (error) throw error;
+      
+      // Get the public URL
+      const { data: urlData } = supabase.storage
+        .from('food_images')
+        .getPublicUrl(filePath);
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image. Please try again.');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const onSubmit = async (values: FormValues) => {
     try {
       if (!user) {
         toast.error('You must be logged in to donate food');
         return;
+      }
+      
+      // First upload the image if one was selected
+      let uploadedImageUrl = null;
+      if (imageFile) {
+        uploadedImageUrl = await uploadImage();
+        if (!uploadedImageUrl && imageFile) {
+          // If there was an image to upload but it failed, alert the user
+          toast.error('Image upload failed. Please try again.');
+          return;
+        }
       }
 
       // Format the data for Supabase
@@ -62,6 +126,7 @@ const DonationForm: React.FC = () => {
         pickup_time: values.pickupTime,
         description: values.description || '',
         status: 'pending',
+        image_url: uploadedImageUrl,
       };
 
       // Use the any type to bypass TypeScript's type checking for now
@@ -72,6 +137,8 @@ const DonationForm: React.FC = () => {
 
       toast.success('Food donation posted successfully!');
       form.reset();
+      setImageFile(null);
+      setPreviewUrl(null);
       
       // Navigate to the track tab to see the new donation
       navigate('/donate?tab=track');
@@ -197,6 +264,60 @@ const DonationForm: React.FC = () => {
               />
             </div>
 
+            {/* Image Upload Section */}
+            <div className="space-y-2">
+              <FormLabel className="flex items-center gap-2">
+                <Image className="h-4 w-4" /> Food Image (Optional)
+              </FormLabel>
+              <div className="flex flex-col gap-4 items-center">
+                {previewUrl && (
+                  <div className="relative w-full max-w-xs rounded-md overflow-hidden">
+                    <img 
+                      src={previewUrl} 
+                      alt="Food preview" 
+                      className="w-full h-48 object-cover rounded-md border border-border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => {
+                        setPreviewUrl(null);
+                        setImageFile(null);
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                )}
+                <div className={`w-full ${previewUrl ? 'hidden' : 'block'}`}>
+                  <label 
+                    htmlFor="image-upload" 
+                    className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-md border-muted-foreground/40 cursor-pointer bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2 py-6 px-4 text-center">
+                      <Upload className="w-8 h-8 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground font-medium">
+                        Click to upload a photo of the food
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        JPG, PNG or GIF (max 10MB)
+                      </p>
+                    </div>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                      disabled={uploading}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <FormField
               control={form.control}
               name="description"
@@ -215,8 +336,8 @@ const DonationForm: React.FC = () => {
               )}
             />
 
-            <Button type="submit" className="w-full">
-              Post Donation
+            <Button type="submit" className="w-full" disabled={uploading}>
+              {uploading ? 'Uploading...' : 'Post Donation'}
             </Button>
           </form>
         </Form>
