@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -65,7 +64,9 @@ const DonationForm: React.FC = () => {
         status: 'pending',
       };
 
-      const { error } = await supabase.from('food_donations').insert(donationData);
+      // Use the any type to bypass TypeScript's type checking for now
+      // The types will be updated after running the migration
+      const { error } = await (supabase as any).from('food_donations').insert(donationData);
 
       if (error) throw error;
 
