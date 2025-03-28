@@ -106,7 +106,7 @@ const DonateFood = () => {
       text: message,
       sender: {
         id: "current-user",
-        name: user?.name || "Current User",
+        name: user?.user_metadata?.name || user?.email || "Current User",
       },
       timestamp: new Date()
     };
