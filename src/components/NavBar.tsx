@@ -16,8 +16,8 @@ const NavBar: React.FC<NavBarProps> = ({ className }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
     setIsMenuOpen(false);
   };
@@ -38,7 +38,7 @@ const NavBar: React.FC<NavBarProps> = ({ className }) => {
           {isAuthenticated ? (
             <>
               <span className="text-sm text-muted-foreground">
-                Hello, {user?.name}
+                Hello, {user?.user_metadata.name || user?.email}
               </span>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
@@ -78,7 +78,7 @@ const NavBar: React.FC<NavBarProps> = ({ className }) => {
                     <User className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium">{user?.name}</p>
+                    <p className="font-medium">{user?.user_metadata.name || user?.email}</p>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
                   </div>
                 </div>
