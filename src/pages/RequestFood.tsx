@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,11 +5,14 @@ import NavBar from '@/components/NavBar';
 import FadeIn from '@/components/FadeIn';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import NearbyNotification from '@/components/NearbyNotification';
-import TrackDonation, { DonationStatus } from '@/components/TrackDonation';
-import ChatInterface, { Message } from '@/components/ChatInterface';
+import { DonationStatus } from '@/components/TrackDonation';
+import { Message } from '@/components/ChatInterface';
+
+import RequestCards from '@/components/request/RequestCards';
+import RequestNotifications from '@/components/request/RequestNotifications';
+import RequestPickups from '@/components/request/RequestPickups';
+import RequestMessageCenter from '@/components/request/RequestMessageCenter';
 
 const mockDonations: DonationStatus[] = [
   {
@@ -95,7 +97,6 @@ const RequestFood = () => {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [activeTab, setActiveTab] = useState("notifications");
 
-  // Redirect to login if not authenticated
   React.useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -179,122 +180,31 @@ const RequestFood = () => {
             </TabsList>
             
             <TabsContent value="search" className="space-y-8">
-              <div className="grid md:grid-cols-3 gap-8">
-                <FadeIn delay={100}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Search Available Food</CardTitle>
-                      <CardDescription>
-                        Browse food donations near you
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-40 bg-secondary rounded-md flex items-center justify-center mb-4">
-                        <p className="text-muted-foreground">Food search interface will go here</p>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full" onClick={() => toast.success('This feature will be implemented soon!')}>
-                        Browse Donations
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </FadeIn>
-
-                <FadeIn delay={200}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Request Specific Items</CardTitle>
-                      <CardDescription>
-                        Let donors know what you need
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-40 bg-secondary rounded-md flex items-center justify-center mb-4">
-                        <p className="text-muted-foreground">Request form will go here</p>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full" onClick={() => toast.success('This feature will be implemented soon!')}>
-                        Create Request
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </FadeIn>
-
-                <FadeIn delay={300}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Pickup Information</CardTitle>
-                      <CardDescription>
-                        Arrange to collect your food items
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-40 bg-secondary rounded-md flex items-center justify-center mb-4">
-                        <p className="text-muted-foreground">Pickup scheduler will go here</p>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full" onClick={() => setActiveTab('track')}>
-                        View My Pickups
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </FadeIn>
-              </div>
+              <RequestCards onNavigateToTrack={() => setActiveTab('track')} />
             </TabsContent>
 
             <TabsContent value="notifications">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {nearbyDonations.length > 0 ? (
-                  nearbyDonations.map((donation) => (
-                    <FadeIn key={donation.id}>
-                      <NearbyNotification
-                        donation={donation}
-                        onAccept={handleAcceptDonation}
-                        onIgnore={handleIgnoreDonation}
-                      />
-                    </FadeIn>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-muted-foreground">No new notifications</p>
-                  </div>
-                )}
-              </div>
+              <RequestNotifications
+                nearbyDonations={nearbyDonations}
+                onAccept={handleAcceptDonation}
+                onIgnore={handleIgnoreDonation}
+              />
             </TabsContent>
 
             <TabsContent value="track">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {acceptedDonations.length > 0 ? (
-                  acceptedDonations.map((donation) => (
-                    <FadeIn key={donation.id}>
-                      <TrackDonation
-                        donation={donation}
-                        onStatusUpdate={handleStatusUpdate}
-                      />
-                    </FadeIn>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-muted-foreground">You haven't accepted any donations yet</p>
-                  </div>
-                )}
-              </div>
+              <RequestPickups
+                acceptedDonations={acceptedDonations}
+                onStatusUpdate={handleStatusUpdate}
+              />
             </TabsContent>
 
             <TabsContent value="messages">
-              <div className="grid md:grid-cols-1 lg:grid-cols-1 gap-6">
-                <FadeIn>
-                  <ChatInterface
-                    messages={messages}
-                    onSendMessage={handleSendMessage}
-                    recipientName="Sarah Wilson"
-                    recipientAvatar="https://randomuser.me/api/portraits/women/65.jpg"
-                  />
-                </FadeIn>
-              </div>
+              <RequestMessageCenter
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                recipientName="Sarah Wilson"
+                recipientAvatar="https://randomuser.me/api/portraits/women/65.jpg"
+              />
             </TabsContent>
           </Tabs>
 

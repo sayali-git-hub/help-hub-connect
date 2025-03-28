@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,10 +5,13 @@ import NavBar from '@/components/NavBar';
 import FadeIn from '@/components/FadeIn';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import TrackDonation, { DonationStatus } from '@/components/TrackDonation';
-import ChatInterface, { Message } from '@/components/ChatInterface';
+import { DonationStatus } from '@/components/TrackDonation';
+import { Message } from '@/components/ChatInterface';
+
+import DonationCards from '@/components/donate/DonationCards';
+import DonationTracker from '@/components/donate/DonationTracker';
+import DonationMessageCenter from '@/components/donate/DonationMessageCenter';
 
 const mockDonations: DonationStatus[] = [
   {
@@ -82,7 +84,6 @@ const DonateFood = () => {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [activeTab, setActiveTab] = useState("donate");
 
-  // Redirect to login if not authenticated
   React.useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -139,102 +140,23 @@ const DonateFood = () => {
             </TabsList>
             
             <TabsContent value="donate" className="space-y-8">
-              <div className="grid md:grid-cols-3 gap-8">
-                <FadeIn delay={100}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Post Available Food</CardTitle>
-                      <CardDescription>
-                        List food items you're willing to donate
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-40 bg-secondary rounded-md flex items-center justify-center mb-4">
-                        <p className="text-muted-foreground">Food listing form will go here</p>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full" onClick={() => toast.success('This feature will be implemented soon!')}>
-                        Create Listing
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </FadeIn>
-
-                <FadeIn delay={200}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Schedule Pickup</CardTitle>
-                      <CardDescription>
-                        Arrange times for recipients to collect food
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-40 bg-secondary rounded-md flex items-center justify-center mb-4">
-                        <p className="text-muted-foreground">Scheduling calendar will go here</p>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full" onClick={() => toast.success('This feature will be implemented soon!')}>
-                        Set Availability
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </FadeIn>
-
-                <FadeIn delay={300}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Track Donations</CardTitle>
-                      <CardDescription>
-                        See the impact of your contributions
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-40 bg-secondary rounded-md flex items-center justify-center mb-4">
-                        <p className="text-muted-foreground">Donation statistics will go here</p>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full" onClick={() => setActiveTab('track')}>
-                        View History
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </FadeIn>
-              </div>
+              <DonationCards onNavigateToTrack={() => setActiveTab('track')} />
             </TabsContent>
 
             <TabsContent value="track">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {donations.map((donation) => (
-                  <FadeIn key={donation.id}>
-                    <TrackDonation
-                      donation={donation}
-                      onStatusUpdate={handleStatusUpdate}
-                    />
-                  </FadeIn>
-                ))}
-              </div>
-
-              {donations.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No donations found</p>
-                </div>
-              )}
+              <DonationTracker 
+                donations={donations} 
+                onStatusUpdate={handleStatusUpdate} 
+              />
             </TabsContent>
 
             <TabsContent value="messages">
-              <div className="grid md:grid-cols-1 lg:grid-cols-1 gap-6">
-                <FadeIn>
-                  <ChatInterface
-                    messages={messages}
-                    onSendMessage={handleSendMessage}
-                    recipientName="Alice Smith"
-                    recipientAvatar="https://randomuser.me/api/portraits/women/32.jpg"
-                  />
-                </FadeIn>
-              </div>
+              <DonationMessageCenter
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                recipientName="Alice Smith"
+                recipientAvatar="https://randomuser.me/api/portraits/women/32.jpg"
+              />
             </TabsContent>
           </Tabs>
 
