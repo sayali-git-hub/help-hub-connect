@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import NavBar from '@/components/NavBar';
 import FadeIn from '@/components/FadeIn';
@@ -80,11 +81,23 @@ const mockMessages: Message[] = [
 const DonateFood = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [donations, setDonations] = useState<DonationStatus[]>(mockDonations);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
-  const [activeTab, setActiveTab] = useState("donate");
+  
+  // Get the tab from URL query parameter or default to "donate"
+  const query = new URLSearchParams(location.search);
+  const tabFromQuery = query.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromQuery || "donate");
 
-  React.useEffect(() => {
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(`/donate?tab=${value}`, { replace: true });
+  };
+
+  // Handle authentication check
+  useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       toast.error('Please login to access this page');
@@ -132,7 +145,7 @@ const DonateFood = () => {
             </p>
           </FadeIn>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid grid-cols-3 mb-8">
               <TabsTrigger value="donate">Post Donation</TabsTrigger>
               <TabsTrigger value="track">Track Donations</TabsTrigger>
@@ -140,7 +153,7 @@ const DonateFood = () => {
             </TabsList>
             
             <TabsContent value="donate" className="space-y-8">
-              <DonationCards onNavigateToTrack={() => setActiveTab('track')} />
+              <DonationCards onNavigateToTrack={() => handleTabChange('track')} />
             </TabsContent>
 
             <TabsContent value="track">
